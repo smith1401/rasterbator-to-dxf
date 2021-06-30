@@ -110,21 +110,29 @@ def get_center_and_radius_svg(bbox):
     return (x_min + x_diff, y_min_new + y_diff), y_diff
 
 
+def add_circle_to_output(center, radius):
+    """
+    Adds a circle to the output file
+    :param center: center coordinates (x,y)
+    :param radius: radius of the circle
+    """
+    diam_mm = radius * 25.4 * 2
+    diam_mm = round(diam_mm * 2) / 2
+
+    if diam_mm >= min_diam:
+        diams.append(diam_mm)
+        coords.append((center[0] * 25.4, center[1] * 25.4, diam_mm / 2))
+        doc_out.modelspace().add_circle(center, diam_mm / 2 / 25.4)
+
+
 def polyline_to_circle(line):
     """
     Transform a circle consisting of a polyline into a DXF circle
     :param line: Polyline
-    :return: Circle
     """
     with line.points('xy') as points:
         center, radius = get_center_and_radius(points)
-
-        diam_mm = radius * 25.4 * 2
-        diam_mm = round(diam_mm * 2) / 2
-
-        if diam_mm >= min_diam:
-            diams.append(diam_mm)
-            doc_out.modelspace().add_circle(center, radius)
+        add_circle_to_output(center, radius)
 
 
 if __name__ == '__main__':
@@ -182,14 +190,9 @@ if __name__ == '__main__':
         print(f'{len(circles)} features found!')
 
         for center, radius in tqdm(circles):
-            diam_mm = radius * 25.4 * 2
-            diam_mm = round(diam_mm * 2) / 2
+            add_circle_to_output(center, radius)
 
-            if diam_mm >= min_diam:
-                diams.append(diam_mm)
-                coords.append((center[0] * 25.4, center[1] * 25.4, diam_mm / 2))
-                doc_out.modelspace().add_circle(center, diam_mm / 2 / 25.4)
-
+        # calculate distances between circle outlines
         coords = np.asarray(coords)
         coords[:, 2] = np.around(coords[:, 2] * 2) / 2
 
