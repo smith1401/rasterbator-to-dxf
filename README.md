@@ -16,7 +16,7 @@ Convert a rasterbated PDF or a DXF file containing polyline-circle features to a
 
 optional arguments:
   -h, --help            show this help message and exit
-  -i FILE               input file containing polyline circle features
+  -i FILE               PDF input file or DXF containing polyline circle features
   -o FILE               output file name
   --hist                plot histogram of circle diameters
   --min-diameter MIN_DIAM

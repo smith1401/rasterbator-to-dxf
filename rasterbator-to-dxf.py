@@ -128,7 +128,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='rasterbator-to-dxf',
                                      description='Convert a rasterbated PDF or a DXF file containing polyline-circle features to a DXF file containing circles.')
     parser.add_argument("-i", dest="infile", required=True,
-                        help="input file containing polyline circle features", metavar="FILE",
+                        help="PDF input file or DXF containing polyline circle features", metavar="FILE",
                         type=lambda x: is_valid_file(parser, x))
     parser.add_argument("-o", dest="outfile", required=False,
                         help="output file name", metavar="FILE", type=str)
