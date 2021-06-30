@@ -7,3 +7,19 @@ for laser cutting, etc.
 
 * requires at least Python 3.7
 * when PDFs should be converted, _pdftocairo_ has to be installed
+
+## Usage
+```console
+usage: rasterbator-to-dxf [-h] -i FILE [-o FILE] [--hist] [--min-diameter MIN_DIAM]
+
+Convert a rasterbated PDF or a DXF file containing polyline-circle features to a DXF file containing circles.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i FILE               input file containing polyline circle features
+  -o FILE               output file name
+  --hist                plot histogram of circle diameters
+  --min-diameter MIN_DIAM
+                        minimum diameter of circle
+
+```
