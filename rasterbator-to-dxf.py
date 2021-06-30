@@ -28,8 +28,10 @@ import os
 
 import ezdxf as dx
 import matplotlib.pyplot as plt
+import numpy as np
 import pdfplumber
 from ezdxf import units
+from scipy.spatial import distance
 from svgpathtools import svg2paths
 from svgpathtools.path import CubicBezier
 from tqdm import tqdm
@@ -43,7 +45,7 @@ a4_points = [(0, 0), (11.7, 0), (11.7, 8.3), (0, 8.3)]
 page_points = a0_points
 min_diam = 1.5
 pdftocairo_dpi = 72
-
+coords = []
 
 def get_page_points(path):
     """
@@ -118,8 +120,9 @@ def polyline_to_circle(line):
         center, radius = get_center_and_radius(points)
 
         diam_mm = radius * 25.4 * 2
+        diam_mm = round(diam_mm * 2) / 2
 
-        if diam_mm > 1.5:
+        if diam_mm >= min_diam:
             diams.append(diam_mm)
             doc_out.modelspace().add_circle(center, radius)
 
@@ -180,10 +183,19 @@ if __name__ == '__main__':
 
         for center, radius in tqdm(circles):
             diam_mm = radius * 25.4 * 2
+            diam_mm = round(diam_mm * 2) / 2
 
-            if diam_mm > min_diam:
+            if diam_mm >= min_diam:
                 diams.append(diam_mm)
-                doc_out.modelspace().add_circle(center, radius)
+                coords.append((center[0] * 25.4, center[1] * 25.4, diam_mm / 2))
+                doc_out.modelspace().add_circle(center, diam_mm / 2 / 25.4)
+
+        coords = np.asarray(coords)
+        coords[:, 2] = np.around(coords[:, 2] * 2) / 2
+
+        rr, rrr = np.meshgrid(coords[:, 2], coords[:, 2])
+        dists = np.abs(np.tril(distance.cdist(coords[:, :1], coords[:, :1]) - rr - rrr))
+        dists = dists[dists != 0.0]
 
     doc_out.modelspace().add_lwpolyline(page_points, close=True)
     doc_out.saveas(args.outfile)
@@ -192,12 +204,23 @@ if __name__ == '__main__':
     print(f"Number of circles: {len(diams)}")
     print(f"Minimum diameter: {min(diams):.2f} mm")
     print(f"Maximum diameter: {max(diams):.2f} mm")
+    print(f"Minimum distance: {np.min(dists):.2f} mm")
+    print(f"Maximum distance: {np.max(dists):.2f} mm")
+    print(f"Mean distance: {np.mean(dists):.2f} mm")
 
     if args.plot_hist:
-        n, bins, patches = plt.hist(diams, 50, alpha=0.75)
+        fig, ax = plt.subplots(1, 2, figsize=(16, 6))
+        n, bins, patches = ax[0].hist(diams, 50, alpha=0.75)
+        n, bins, patches = ax[1].hist(dists.flatten(), 50, alpha=0.75)
 
-        plt.xlabel('Diameter')
-        plt.ylabel('Count')
-        plt.title('Histogram of the diameter of the circles to cut')
-        plt.grid(True)
+        ax[0].set_xlabel('Diameter')
+        ax[0].set_ylabel('Count')
+        ax[0].set_title('Histogram of the diameter of the circles to cut')
+        ax[0].grid(True)
+
+        ax[1].set_xlabel('Distances')
+        ax[1].set_ylabel('Count')
+        ax[1].set_title('Histogram of the distances between circles to cut')
+        ax[1].grid(True)
+        plt.tight_layout()
         plt.show()
